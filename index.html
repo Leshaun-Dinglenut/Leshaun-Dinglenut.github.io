@@ -79,57 +79,5 @@
         }
 
         @keyframes blinker { 50% { opacity: 0; } }
-    </style>
-</head>
-<body>
 
-<header>
-    <div>CMD//SITUATION_ROOM</div>
-    <div style="font-size: 0.8rem;">STATUS: <span class="blink">ONLINE</span></div>
-</header>
-
-<div class="dashboard">
-    <div id="map"></div>
-
-    <aside class="sidebar">
-        <div class="card">
-            <div class="card-header card-title">System Time (UTC)</div>
-            <div id="clock" style="font-size: 1.5rem; font-weight: bold;">00:00:00</div>
-        </div>
-
-        <div class="card">
-            <div class="card-title">Live Intelligence Feed</div>
-            <div class="log-entry">17:44 - Monitoring Central Asia sector.</div>
-            <div class="log-entry">17:30 - Route optimization calculated.</div>
-            <div class="log-entry" style="border-color: #d29922;">17:15 - Atmospheric shift detected.</div>
-        </div>
-    </aside>
-</div>
-
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
-<script>
-    // 1. Initialize the Map
-    // Coordinates [40, 70] center it near Central Asia
-    const map = L.map('map').setView([40, 70], 4);
-
-    // 2. Add "Dark Mode" Map Tiles (Using Stadia Maps Alidade Smooth Dark)
-    L.tileLayer('https://tiles.stadiamaps.com/tiles/alidade_smooth_dark/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
-
-    // 3. Add a Custom Marker (Example: A "Command Center" location)
-    const marker = L.marker([41.3, 69.3]).addTo(map);
-    marker.bindPopup("<b>Primary Node</b><br>Tashkent Sector Monitoring.").openPopup();
-
-    // 4. Live Clock Script
-    function updateClock() {
-        const now = new Date();
-        document.getElementById('clock').innerText = now.toISOString().substr(11, 8);
-    }
-    setInterval(updateClock, 1000);
-    updateClock();
-</script>
-
-</body>
-</html>
+        /* Small fix for map popup text color */
