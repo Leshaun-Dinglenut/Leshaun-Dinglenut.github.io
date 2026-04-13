@@ -48,6 +48,7 @@
             display: flex;
             flex-direction: column;
             gap: 20px;
+            overflow-y: auto;
         }
 
         .card {
@@ -66,9 +67,10 @@
 
         .log-entry {
             font-size: 0.75rem;
-            margin-bottom: 8px;
-            border-left: 2px solid #238636;
+            margin-bottom: 12px;
+            border-left: 2px solid #d29922;
             padding-left: 10px;
+            line-height: 1.4;
         }
 
         .blink {
@@ -78,11 +80,12 @@
 
         @keyframes blinker { 50% { opacity: 0; } }
 
-        /* Map Popup Fixes */
+        /* Map Popup Customization */
         .leaflet-popup-content-wrapper, .leaflet-popup-tip {
             background: #161b22 !important;
             color: #ffffff !important;
-            border: 1px solid #30363d;
+            border: 1px solid #58a6ff;
+            border-radius: 4px;
         }
     </style>
 </head>
@@ -90,7 +93,7 @@
 
 <header>
     <div>CMD//SITUATION_ROOM</div>
-    <div style="font-size: 0.8rem;">STATUS: <span class="blink">ONLINE</span></div>
+    <div style="font-size: 0.8rem;">INTEL_STREAM: <span class="blink">ACTIVE</span></div>
 </header>
 
 <div class="dashboard">
@@ -103,17 +106,16 @@
         </div>
 
         <div class="card">
-            <div class="card-title">Live Intelligence Feed</div>
-            <div class="log-entry">18:00 - Data synchronization complete.</div>
-            <div class="log-entry">17:44 - Monitoring Central Asia sector.</div>
-            <div class="log-entry" style="border-color: #d29922;">17:15 - Atmospheric shift detected.</div>
+            <div class="card-title">Global Event Log</div>
+            <div id="event-log">
+                </div>
         </div>
         
         <div class="card">
-            <div class="card-title">Sector Status</div>
-            <p style="font-size: 0.8rem; margin: 0;">Operational Load: 42%</p>
+            <div class="card-title">System Load</div>
+            <p style="font-size: 0.8rem; margin: 0;">Buffer: Stable</p>
             <div style="background: #30363d; height: 5px; margin-top: 10px; border-radius: 5px;">
-                <div style="background: #58a6ff; width: 42%; height: 100%; border-radius: 5px;"></div>
+                <div style="background: #3fb950; width: 85%; height: 100%; border-radius: 5px;"></div>
             </div>
         </div>
     </aside>
@@ -122,19 +124,48 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // Initialize Map
-    const map = L.map('map').setView([40, 70], 4);
+    // 1. Initialize Map
+    const map = L.map('map').setView([38, 65], 4);
 
-    // Dark Mode Tiles
+    // 2. Dark Mode Tiles (CartoDB)
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
         attribution: '&copy; OpenStreetMap &copy; CARTO'
     }).addTo(map);
 
-    // Marker
-    const marker = L.marker([41.3, 69.3]).addTo(map);
-    marker.bindPopup("<b>Primary Node</b><br>Tashkent Sector Monitoring.").openPopup();
+    // 3. News & Intel Data Array
+    // Add or change locations here. Format: [Latitude, Longitude]
+    const liveEvents = [
+        { lat: 41.3, lng: 69.3, title: "TASHKENT HUB", desc: "Primary data node reporting 99% uptime." },
+        { lat: 34.5, lng: 69.1, title: "KABUL TRANSIT", desc: "Logistics corridor cleared for transport." },
+        { lat: 43.2, lng: 76.8, title: "ALMATY SECTOR", desc: "Routine maintenance on regional servers." },
+        { lat: 37.9, lng: 58.3, title: "ASHGABAT ALERT", desc: "Anomalous signal detected in northern sector." },
+        { lat: 40.2, lng: 44.5, title: "YEREVAN NODE", desc: "Synchronization with main frame complete." }
+    ];
 
-    // Clock GMT+8
+    const logContainer = document.getElementById('event-log');
+
+    // 4. Function to generate markers and sidebar entries
+    liveEvents.forEach(event => {
+        // Create gold circle marker
+        const marker = L.circleMarker([event.lat, event.lng], {
+            radius: 7,
+            fillColor: "#d29922",
+            color: "#fff",
+            weight: 1,
+            opacity: 1,
+            fillOpacity: 0.8
+        }).addTo(map);
+
+        marker.bindPopup(`<b>${event.title}</b><br>${event.desc}`);
+
+        // Create sidebar entry
+        const entry = document.createElement('div');
+        entry.className = 'log-entry';
+        entry.innerHTML = `<strong>${event.title}</strong><br>${event.desc}`;
+        logContainer.appendChild(entry);
+    });
+
+    // 5. Clock GMT+8 (Singapore/Perth/Beijing Time)
     function updateClock() {
         const now = new Date();
         const gmt8Time = now.toLocaleTimeString('en-GB', { 
