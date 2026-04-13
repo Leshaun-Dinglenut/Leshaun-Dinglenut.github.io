@@ -31,18 +31,16 @@
 
         .dashboard {
             display: grid;
-            grid-template-columns: 1fr 350px; /* Map on left, sidebar on right */
+            grid-template-columns: 1fr 350px;
             flex-grow: 1;
         }
 
-        /* Map Styling */
         #map {
             height: 100%;
             width: 100%;
             background: #0b0e14;
         }
 
-        /* Sidebar Styling */
         .sidebar {
             background-color: #0d1117;
             border-left: 2px solid #30363d;
@@ -80,4 +78,75 @@
 
         @keyframes blinker { 50% { opacity: 0; } }
 
-        /* Small fix for map popup text color */
+        /* Map Popup Fixes */
+        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+            background: #161b22 !important;
+            color: #ffffff !important;
+            border: 1px solid #30363d;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>CMD//SITUATION_ROOM</div>
+    <div style="font-size: 0.8rem;">STATUS: <span class="blink">ONLINE</span></div>
+</header>
+
+<div class="dashboard">
+    <div id="map"></div>
+
+    <aside class="sidebar">
+        <div class="card">
+            <div class="card-title">System Time (GMT+8)</div>
+            <div id="clock" style="font-size: 1.5rem; font-weight: bold;">00:00:00</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">Live Intelligence Feed</div>
+            <div class="log-entry">18:00 - Data synchronization complete.</div>
+            <div class="log-entry">17:44 - Monitoring Central Asia sector.</div>
+            <div class="log-entry" style="border-color: #d29922;">17:15 - Atmospheric shift detected.</div>
+        </div>
+        
+        <div class="card">
+            <div class="card-title">Sector Status</div>
+            <p style="font-size: 0.8rem; margin: 0;">Operational Load: 42%</p>
+            <div style="background: #30363d; height: 5px; margin-top: 10px; border-radius: 5px;">
+                <div style="background: #58a6ff; width: 42%; height: 100%; border-radius: 5px;"></div>
+            </div>
+        </div>
+    </aside>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+    // Initialize Map
+    const map = L.map('map').setView([40, 70], 4);
+
+    // Dark Mode Tiles
+    L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+        attribution: '&copy; OpenStreetMap &copy; CARTO'
+    }).addTo(map);
+
+    // Marker
+    const marker = L.marker([41.3, 69.3]).addTo(map);
+    marker.bindPopup("<b>Primary Node</b><br>Tashkent Sector Monitoring.").openPopup();
+
+    // Clock GMT+8
+    function updateClock() {
+        const now = new Date();
+        const gmt8Time = now.toLocaleTimeString('en-GB', { 
+            timeZone: 'Asia/Shanghai', 
+            hour12: false 
+        });
+        document.getElementById('clock').innerText = gmt8Time;
+    }
+    
+    setInterval(updateClock, 1000);
+    updateClock();
+</script>
+
+</body>
+</html>
