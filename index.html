@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>SITUATION MONITOR | ALPHA</title>
+    <title>SITUATION MONITOR | GLOBAL</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 
@@ -26,12 +26,23 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            letter-spacing: 2px;
+            letter-spacing: 1px;
+        }
+
+        .search-box {
+            background: #0d1117;
+            border: 1px solid #30363d;
+            color: #58a6ff;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-family: monospace;
+            outline: none;
+            width: 250px;
         }
 
         .dashboard {
             display: grid;
-            grid-template-columns: 1fr 350px;
+            grid-template-columns: 1fr 380px;
             flex-grow: 1;
         }
 
@@ -44,33 +55,28 @@
         .sidebar {
             background-color: #0d1117;
             border-left: 2px solid #30363d;
-            padding: 20px;
+            padding: 15px;
             display: flex;
             flex-direction: column;
-            gap: 20px;
+            gap: 15px;
             overflow-y: auto;
         }
 
         .card {
             background: #161b22;
             border: 1px solid #30363d;
-            padding: 15px;
+            padding: 12px;
             border-radius: 4px;
         }
 
         .card-title {
             color: #58a6ff;
-            font-size: 0.8rem;
+            font-size: 0.75rem;
             margin-bottom: 10px;
             text-transform: uppercase;
-        }
-
-        .log-entry {
-            font-size: 0.75rem;
-            margin-bottom: 12px;
-            border-left: 2px solid #d29922;
-            padding-left: 10px;
-            line-height: 1.4;
+            font-weight: bold;
+            display: flex;
+            justify-content: space-between;
         }
 
         .blink {
@@ -81,18 +87,26 @@
         @keyframes blinker { 50% { opacity: 0; } }
 
         /* Map Popup Customization */
-        .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+        .leaflet-popup-content-wrapper {
             background: #161b22 !important;
             color: #ffffff !important;
             border: 1px solid #58a6ff;
             border-radius: 4px;
+            font-family: monospace;
         }
+        .leaflet-popup-tip { background: #58a6ff !important; }
+
+        /* Custom Scrollbar for Sidebar */
+        .sidebar::-webkit-scrollbar { width: 5px; }
+        .sidebar::-webkit-scrollbar-track { background: #0d1117; }
+        .sidebar::-webkit-scrollbar-thumb { background: #30363d; border-radius: 10px; }
     </style>
 </head>
 <body>
 
 <header>
-    <div>CMD//SITUATION_ROOM</div>
+    <div style="font-weight: bold;">CMD//SITUATION_ROOM</div>
+    <input type="text" class="search-box" placeholder="SEARCH COORDINATES...">
     <div style="font-size: 0.8rem;">INTEL_STREAM: <span class="blink">ACTIVE</span></div>
 </header>
 
@@ -102,20 +116,31 @@
     <aside class="sidebar">
         <div class="card">
             <div class="card-title">System Time (GMT+8)</div>
-            <div id="clock" style="font-size: 1.5rem; font-weight: bold;">00:00:00</div>
+            <div id="clock" style="font-size: 1.8rem; font-weight: bold; color: #e6edf3;">00:00:00</div>
         </div>
 
-        <div class="card">
-            <div class="card-title">Global Event Log</div>
-            <div id="event-log">
-                </div>
+        <div class="card" style="flex-grow: 1; display: flex; flex-direction: column;">
+            <div class="card-title">
+                Live World Intel 
+                <span style="color: #d29922;">● LIVE</span>
+            </div>
+            <div style="flex-grow: 1; min-height: 400px; border: 1px solid #30363d; border-radius: 4px; overflow: hidden;">
+                <iframe 
+                    src="https://rss.app/embed/v1/ticker/tL9zZp5mX6T0A3k8" 
+                    frameborder="0" 
+                    style="width: 100%; height: 100%; background: #161b22;">
+                </iframe>
+            </div>
         </div>
         
         <div class="card">
-            <div class="card-title">System Load</div>
-            <p style="font-size: 0.8rem; margin: 0;">Buffer: Stable</p>
-            <div style="background: #30363d; height: 5px; margin-top: 10px; border-radius: 5px;">
-                <div style="background: #3fb950; width: 85%; height: 100%; border-radius: 5px;"></div>
+            <div class="card-title">Global Connectivity</div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.7rem; margin-bottom: 5px;">
+                <span>Uplink: Stable</span>
+                <span>85%</span>
+            </div>
+            <div style="background: #30363d; height: 4px; border-radius: 2px;">
+                <div style="background: #3fb950; width: 85%; height: 100%; border-radius: 2px;"></div>
             </div>
         </div>
     </aside>
@@ -124,55 +149,43 @@
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 
 <script>
-    // 1. Initialize Map
-    const map = L.map('map').setView([38, 65], 4);
+    // 1. Initialize Map - Zoomed out more to see the world
+    const map = L.map('map').setView([20, 10], 2);
 
-    // 2. Dark Mode Tiles (CartoDB)
+    // 2. Dark Mode Tiles
     L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-        attribution: '&copy; OpenStreetMap &copy; CARTO'
+        attribution: '&copy; CARTO'
     }).addTo(map);
 
-    // 3. News & Intel Data Array
-    // Add or change locations here. Format: [Latitude, Longitude]
-    const liveEvents = [
-        { lat: 41.3, lng: 69.3, title: "TASHKENT HUB", desc: "Primary data node reporting 99% uptime." },
-        { lat: 34.5, lng: 69.1, title: "KABUL TRANSIT", desc: "Logistics corridor cleared for transport." },
-        { lat: 43.2, lng: 76.8, title: "ALMATY SECTOR", desc: "Routine maintenance on regional servers." },
-        { lat: 37.9, lng: 58.3, title: "ASHGABAT ALERT", desc: "Anomalous signal detected in northern sector." },
-        { lat: 40.2, lng: 44.5, title: "YEREVAN NODE", desc: "Synchronization with main frame complete." }
+    // 3. World News Marker Locations
+    const globalPoints = [
+        { lat: 40.7128, lng: -74.0060, title: "NEW YORK", desc: "Financial markets reporting high volatility." },
+        { lat: 51.5074, lng: -0.1278, title: "LONDON", desc: "New tech regulation debates ongoing in parliament." },
+        { lat: 35.6762, lng: 139.6503, title: "TOKYO", desc: "Advancements in robotics announced at tech summit." },
+        { lat: 1.3521, lng: 103.8198, title: "SINGAPORE", desc: "Regional trade logistics hitting peak efficiency." },
+        { lat: -33.8688, lng: 151.2093, title: "SYDNEY", desc: "Pacific monitoring station reports clear signals." }
     ];
 
-    const logContainer = document.getElementById('event-log');
-
-    // 4. Function to generate markers and sidebar entries
-    liveEvents.forEach(event => {
-        // Create gold circle marker
-        const marker = L.circleMarker([event.lat, event.lng], {
-            radius: 7,
-            fillColor: "#d29922",
+    globalPoints.forEach(point => {
+        const marker = L.circleMarker([point.lat, point.lng], {
+            radius: 6,
+            fillColor: "#58a6ff",
             color: "#fff",
             weight: 1,
-            opacity: 1,
             fillOpacity: 0.8
         }).addTo(map);
 
-        marker.bindPopup(`<b>${event.title}</b><br>${event.desc}`);
-
-        // Create sidebar entry
-        const entry = document.createElement('div');
-        entry.className = 'log-entry';
-        entry.innerHTML = `<strong>${event.title}</strong><br>${event.desc}`;
-        logContainer.appendChild(entry);
+        marker.bindPopup(`<b>${point.title}</b><br>${point.desc}`);
     });
 
-    // 5. Clock GMT+8 (Singapore/Perth/Beijing Time)
+    // 4. Clock Function (GMT+8)
     function updateClock() {
         const now = new Date();
-        const gmt8Time = now.toLocaleTimeString('en-GB', { 
+        const timeStr = now.toLocaleTimeString('en-GB', { 
             timeZone: 'Asia/Shanghai', 
             hour12: false 
         });
-        document.getElementById('clock').innerText = gmt8Time;
+        document.getElementById('clock').innerText = timeStr;
     }
     
     setInterval(updateClock, 1000);
